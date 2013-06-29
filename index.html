@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta content="yes" name="apple-mobile-web-app-capable" />
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
+        <meta content="minimum-scale=1.0, width=device-width, maximum-scale=0.6667, user-scalable=no" name="viewport" />
+        <link href="css/style.css" rel="stylesheet" media="screen" type="text/css" />
+        <link href="css/jquery.mobile-1.3.1.min.css" rel="stylesheet" media="screen" type="text/css" />
+        
+        <script type="text/javascript" charset="utf-8" src="cordova.js"></script>
+        <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=true"></script>
+        <script type="text/javascript" charset="utf-8" src="js/jquery-1.10.1.min.js"></script>
+        <script type="text/javascript" charset="utf-8" src="js/jquery.mobile-1.3.1.min.js"></script>
+        
+        <style type="text/css">
+			
+			#map_canvas {
+				height: 340px;
+				z-index: 1;
+			}
+			
+			#stationary_marker {
+				position: absolute;
+				z-index: 2;
+			}
+
+			#btBook {
+				position: absolute;
+				z-index: 2;
+				bottom: 10px;
+			}
+
+        </style>
+        
+        <script type="text/javascript">
+			
+			var geocoder;
+
+			function geocodePosition(pos) {
+				geocoder.geocode({
+					latLng: pos
+			  	}, function(responses) {
+					if (responses && responses.length > 0) {
+				  		updateMarkerAddress(responses[0].formatted_address);
+					} else {
+				  		updateMarkerAddress('No es posible determinar esta ubicación.');
+					}
+			  	});
+			}
+			
+			function updateMarkerAddress(str) {
+				$('#address').val(str);
+			}
+			
+			function getWindowSize() {
+				var windowHeight = 0, windowWidth = 0;
+			  	if (typeof (window.innerWidth) == 'number') {
+					windowHeight = window.innerHeight;
+				  	windowWidth = window.innerWidth;
+				} else if (document.documentElement && (document.documentElement.clientWidth || document.documentElement.clientHeight)) {
+					windowHeight = document.documentElement.clientHeight;
+				  	windowWidth = document.documentElement.clientWidth;
+				} else if (document.body && (document.body.clientWidth || document.body.clientHeight)) {
+					windowHeight = document.body.clientHeight;
+				 	windowWidth = document.body.clientWidth;
+			  	}
+			  	return [windowWidth, windowHeight];
+			}
+			
+	
+			/*
+			$(document).on("dragstart", function(event, ui){
+				event.preventDefault(); 
+				//return false;//edited
+			});
+			*/
+	
+            $(document).on('pageinit', '#main',  function(){
+				
+				$('#stationary_marker').on("dragstart", function(event, ui){
+        			event.stopPropagation();
+					$('#address').val("drag");
+				});
+				
+				var windowSize = getWindowSize();
+				var windowWidth = windowSize[0];
+				var windowHeight = windowSize[1];
+				
+				var headerHeight = $('div[data-role="header"]').height();
+    			var footerHeight = $('div[data-role="footer"]').height();
+    			var contentHeight = windowHeight - headerHeight - footerHeight;
+				
+				$('#btBook').css({'width': windowWidth - 50 + 'px'});
+				$('#map_canvas').css({'min-height': contentHeight - 84 + 'px'});
+				$('#stationary_marker').css({"top": windowHeight/2 + 'px', "left": windowWidth/2 + 'px'});
+		
+                $(document).on('pageshow', '#main', function() {
+					var latLng = new google.maps.LatLng(-34.633234,-58.399867);
+					var map = new google.maps.Map(document.getElementById('map_canvas'), {
+						zoom: 16,
+					  	center: latLng,
+					  	mapTypeId: google.maps.MapTypeId.ROADMAP,
+						disableDefaultUI: true
+					});
+					
+					geocoder = new google.maps.Geocoder();
+	  
+					google.maps.event.addListener(map, 'dragend', function() {
+						latLng = map.getCenter();
+						geocodePosition(latLng);
+					});
+					
+					
+
+                });
+            });
+            
+            
+            document.addEventListener("deviceReady", deviceReady, false);
+            
+            function deviceReady() {
+			
+                /*$(document).on('pageinit', '#booking',  function() {
+                    
+                });*/
+            }
+            
+        </script>
+        
+    </head>
+    <body>
+    	
+        <div data-role="page" id="main">
+            <div data-role="header" data-theme="b" data-position="fixed" data-tap-toggle="false">
+            	<input type="search" id="address" />
+            </div>
+            <div data-role="content">
+                <img id="stationary_marker" src="img/marker-blue.png" alt="" />
+                <div id="map_canvas"></div>
+                <a href="#booking" id="btBook" data-role="button" data-theme="b" data-transition="slide">Pedir Taxi</a>
+	        </div>
+        </div>
+        <div data-role="page" id="booking">
+            <div data-role="header" data-theme="b" data-position="fixed" data-tap-toggle="false">
+                <h1>Reserva</h1>
+                <a href="#main" data-role="button" data-theme="b" data-rel="back">Volver</a>
+            </div>
+            <div data-role="content">
+                <!--<ul data-role="listview" data-theme="b">
+                    <li><a href="#login" data-transition="slide">Login</a></li>
+                    <li><a href="#config" data-transition="flip">Configuración</a></li>
+                </ul>-->
+                <ul data-role="listview" data-theme="b">
+                    <li><input type="text" name="txtStreetName" id="txtStreetName" value="" placeholder="Dirección" /></li>
+                    <li><input type="text" name="txtStreetNumber" id="txtStreetNumber" value="" placeholder="Altura" /></li>
+                    <li><input type="text" name="txtAdditionalNotes" id="txtAdditionalNotes" value="" placeholder="Notas Adicionales" maxlength="50" /></li>
+                </ul>
+                <div>
+                	<a href="#taxiInfo" data-role="button" data-theme="b">Aceptar</a>
+                </div>
+            </div>
+            <div data-role="footer" data-theme="b" data-position="fixed" data-tap-toggle="false">
+                <h4>eTaxi</h4>
+            </div>
+        </div>
+        
+        <div data-role="page" id="login">
+            <div data-role="header" data-theme="b" data-position="fixed" data-tap-toggle="false">
+                <a href="#booking" data-role="button" data-theme="b" data-rel="back">Volver</a>
+                <h1>Login</h1>
+            </div>
+            <div data-role="content">
+               
+            </div>
+            <div data-role="footer">
+                <h4>eTaxi</h4>
+            </div>
+        </div>
+
+        <div data-role="page" id="taxiInfo">
+            <div data-role="header" data-theme="b" data-position="fixed" data-tap-toggle="false">
+                <a href="#booking" data-role="button" data-theme="b" data-rel="back">Volver</a>
+                <h3>eTaxi</h3>
+            </div>
+            <div data-role="content">
+            	
+                <a href="#main" data-role="button" data-theme="b" data-rel="back">Ver en mapa</a>
+                <a href="#" data-role="button" data-theme="b" data-rel="back">Cancelar</a>
+            </div>
+        </div>
+    </body>
+</html>
